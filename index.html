@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baseline Life Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --terra:#C4622D;--terra-dark:#8B3A18;--terra-light:#FAE8DC;
+  --sand:#F5EFE0;--sand-dark:#E8DCC8;--warm-white:#FFFDF8;
+  --sage:#7A9E7E;--sage-dark:#3E6B42;--sage-light:#E8F2E9;
+  --charcoal:#2C2C2A;--gray:#888780;--gray-light:#D3D1C7;--gray-bg:#F1EFE8;
+  --amber:#EF9F27;--amber-light:#FAEEDA;--amber-dark:#854F0B;
+  --border:#D3D1C7;--radius:14px;--radius-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--sand);color:var(--charcoal);display:flex;min-height:100vh}
+
+.sidebar{width:230px;min-height:100vh;background:var(--terra-dark);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;overflow-y:auto}
+.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.1)}
+.logo-mark{display:flex;align-items:center;gap:10px}
+.logo-icon{width:34px;height:34px;background:rgba(255,255,255,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-text{font-family:'Lora',serif;font-size:15px;font-weight:600;color:var(--warm-white)}
+.logo-sub{font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.06em;text-transform:uppercase;margin-top:1px}
+.sidebar-nav{padding:16px 12px;flex:1}
+.nav-label{font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:0.1em;text-transform:uppercase;padding:0 8px;margin:14px 0 5px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radius-sm);margin-bottom:2px;font-size:13px;color:rgba(255,255,255,0.5);transition:all 0.15s;text-decoration:none;cursor:pointer}
+.nav-item:hover{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.9)}
+.nav-item.active{background:var(--terra);color:var(--warm-white);font-weight:500}
+.nav-item svg{width:15px;height:15px;flex-shrink:0}
+.sidebar-bottom{padding:16px 12px;border-top:1px solid rgba(255,255,255,0.1)}
+.user-card{display:flex;align-items:center;gap:10px;padding:8px 10px}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--terra);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:white;flex-shrink:0;font-family:'Lora',serif}
+.user-name{font-size:13px;font-weight:500;color:var(--warm-white)}
+.user-role{font-size:11px;color:rgba(255,255,255,0.35)}
+
+.main{margin-left:230px;flex:1;padding:28px 28px 48px;min-width:0}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.topbar-title{font-family:'Lora',serif;font-size:22px;font-weight:600}
+.topbar-sub{font-size:13px;color:var(--gray);margin-top:3px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.sync-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--gray);padding:5px 10px;background:var(--warm-white);border:1px solid var(--border);border-radius:20px}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--gray-light)}
+.sync-dot.live{background:var(--sage);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.btn-ghost{padding:8px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--warm-white);color:var(--gray);font-family:'DM Sans',sans-serif;transition:all 0.15s}
+.btn-ghost:hover{background:var(--sand-dark)}
+.btn-terra{padding:9px 18px;border-radius:var(--radius-sm);border:none;font-size:13px;font-weight:500;cursor:pointer;background:var(--terra);color:white;font-family:'DM Sans',sans-serif;transition:all 0.15s}
+.btn-terra:hover{background:var(--terra-dark)}
+
+.dual-banner{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.banner{border-radius:var(--radius);padding:20px 24px}
+.banner-fin{background:var(--terra-dark)}
+.banner-wt{background:var(--sage-dark)}
+.b-label{font-size:10px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px}
+.b-title{font-family:'Lora',serif;font-size:15px;font-weight:600;color:white;margin-bottom:2px}
+.b-val{font-family:'DM Mono',monospace;font-size:28px;font-weight:500;color:white;margin-top:10px}
+.b-meta{font-size:12px;color:rgba(255,255,255,0.45);margin-top:3px}
+.b-track{height:5px;background:rgba(255,255,255,0.15);border-radius:3px;margin-top:12px;overflow:hidden}
+.b-fill{height:5px;border-radius:3px;background:rgba(255,255,255,0.55);transition:width 0.7s ease}
+.b-pct{font-size:11px;color:rgba(255,255,255,0.4);margin-top:5px}
+
+.metrics-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:20px}
+.metric-card{background:var(--warm-white);border-radius:var(--radius);border:1px solid var(--border);padding:16px 18px}
+.m-label{font-size:11px;color:var(--gray);margin-bottom:8px}
+.m-val{font-size:22px;font-weight:500;font-family:'DM Mono',monospace;letter-spacing:-0.01em}
+.m-badge{font-size:11px;font-weight:500;padding:2px 7px;border-radius:20px;display:inline-flex;align-items:center;margin-top:8px}
+.bg-green{background:var(--sage-light);color:var(--sage-dark)}
+.bg-terra{background:var(--terra-light);color:var(--terra-dark)}
+.bg-neutral{background:var(--gray-bg);color:var(--gray)}
+.bg-amber{background:var(--amber-light);color:var(--amber-dark)}
+
+.three-col{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:20px}
+.mini{background:var(--warm-white);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px}
+.mini-label{font-size:11px;color:var(--gray);margin-bottom:6px}
+.mini-val{font-size:20px;font-weight:500;font-family:'DM Mono',monospace}
+.mini-sub{font-size:11px;color:var(--gray);margin-top:4px}
+
+.chart-card{background:var(--warm-white);border-radius:var(--radius);border:1px solid var(--border);padding:20px 22px}
+.c-title{font-family:'Lora',serif;font-size:14px;font-weight:600;color:var(--charcoal);margin-bottom:3px}
+.c-sub{font-size:12px;color:var(--gray);margin-bottom:16px}
+
+.charts-row{display:grid;grid-template-columns:1fr 300px;gap:14px;margin-bottom:14px}
+.bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+
+.income-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
+.income-row:last-child{border-bottom:none}
+.i-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.i-name{font-size:13px;margin-left:8px;flex:1;color:var(--charcoal)}
+.i-val{font-size:13px;font-weight:500;font-family:'DM Mono',monospace;color:var(--terra-dark)}
+
+.wi{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--radius-sm);margin-bottom:12px}
+.wi-g{background:var(--sage-light)}.wi-r{background:var(--terra-light)}
+.wi-text{font-size:13px;font-weight:500}
+.wi-g .wi-text{color:var(--sage-dark)}.wi-r .wi-text{color:var(--terra-dark)}
+
+.habit-days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
+.h-day{font-size:9px;color:var(--gray);text-align:center}
+.habit-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:2px}
+.h-cell{height:26px;border-radius:4px;background:var(--gray-bg);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:500;color:var(--gray)}
+.h-cell.done{background:var(--sage-light);color:var(--sage-dark)}
+.h-cell.missed{background:var(--terra-light);color:var(--terra-dark)}
+
+.nw-account-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
+.nw-account-row:last-child{border-bottom:none}
+.nw-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.nw-name{font-size:13px;margin-left:8px;flex:1;color:var(--charcoal)}
+.nw-val{font-size:13px;font-weight:500;font-family:'DM Mono',monospace;color:var(--sage-dark)}
+
+.setup-panel{background:var(--warm-white);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px}
+.s-title{font-family:'Lora',serif;font-size:16px;font-weight:600;margin-bottom:6px}
+.s-sub{font-size:13px;color:var(--gray);margin-bottom:20px;line-height:1.6}
+.step{display:flex;gap:14px;margin-bottom:14px;align-items:flex-start}
+.step-num{width:24px;height:24px;border-radius:50%;background:var(--terra);color:white;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-text{font-size:13px;line-height:1.6}
+.step-text code{font-family:'DM Mono',monospace;font-size:12px;background:var(--gray-bg);padding:1px 6px;border-radius:4px}
+.url-row{display:flex;gap:10px;margin-top:16px}
+.url-row input{flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:'DM Mono',monospace;background:var(--sand);color:var(--charcoal)}
+.url-row input:focus{outline:none;border-color:var(--terra)}
+.err{background:var(--terra-light);border:1px solid #F09595;border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:var(--terra-dark);margin-top:10px;display:none}
+.legend-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gray)}
+.leg-dot{width:8px;height:8px;border-radius:50%}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-icon">🌅</div>
+      <div><div class="logo-text">Baseline</div><div class="logo-sub">Life Planner</div></div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Overview</div>
+    <a class="nav-item active" href="#">
+      <svg viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="currentColor"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="currentColor" opacity="0.5"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity="0.5"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="currentColor" opacity="0.3"/></svg>
+      Dashboard
+    </a>
+    <div class="nav-label">Health</div>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 16 16" fill="none"><path d="M8 13S2 9 2 5.5A3.5 3.5 0 018 3a3.5 3.5 0 016 2.5C14 9 8 13 8 13z" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+      Weight Log
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Daily Habits
+    </a>
+    <div class="nav-label">Finances</div>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 16 16" fill="none"><path d="M2 12L6 7L9 10L13 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Income Log
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M2 6h12" stroke="currentColor" stroke-width="1.5"/></svg>
+      Bill Tracker
+    </a>
+    <a class="nav-item" href="#">
+      <svg viewBox="0 0 16 16" fill="none"><path d="M2 14V6l4-4h6l2 2v10H2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 2v4H2" stroke="currentColor" stroke-width="1.5"/></svg>
+      Net Worth
+    </a>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="user-card">
+      <div class="user-avatar">A</div>
+      <div><div class="user-name">Andre</div><div class="user-role">Gulf Breeze, FL</div></div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">Dashboard</div>
+      <div class="topbar-sub" id="date-display"></div>
+    </div>
+    <div class="topbar-right">
+      <div class="sync-badge"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">Not connected</span></div>
+      <button class="btn-ghost" onclick="loadData()">Refresh</button>
+    </div>
+  </div>
+
+  <div class="setup-panel" id="setup-panel">
+    <div class="s-title">Connect your Baseline Google Sheet</div>
+    <div class="s-sub">One-time setup. Paste the Apps Script web app URL below after deploying <code>Baseline_Code.gs</code>.</div>
+    <div class="step"><div class="step-num">1</div><div class="step-text">Open Baseline Sheet → <code>Extensions</code> → <code>Apps Script</code> → paste <code>Baseline_Code.gs</code> → Save</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-text"><code>Deploy</code> → <code>New deployment</code> → Web app → Execute as: Me → Anyone → Deploy → copy URL</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-text">Paste URL below and click Connect</div></div>
+    <div class="url-row">
+      <input type="text" id="script-url" placeholder="https://script.google.com/macros/s/YOUR_ID/exec">
+      <button class="btn-terra" onclick="saveUrl()">Connect</button>
+    </div>
+    <div class="err" id="err-banner">Could not connect. Double-check the URL and access settings.</div>
+  </div>
+
+  <div id="dash" style="display:none;">
+
+    <div class="dual-banner">
+      <div class="banner banner-fin">
+        <div class="b-label">Financial goal</div>
+        <div class="b-title">$300,000 by Dec 31, 2026</div>
+        <div class="b-val" id="b-earned">$0</div>
+        <div class="b-meta" id="b-fin-meta">$0 earned · 0% complete</div>
+        <div class="b-track"><div class="b-fill" id="b-fin-fill" style="width:0%"></div></div>
+        <div class="b-pct" id="b-fin-pct">0% — keep building</div>
+      </div>
+      <div class="banner banner-wt">
+        <div class="b-label">Weight goal</div>
+        <div class="b-title">170 lbs by Dec 31, 2026</div>
+        <div class="b-val" id="b-weight">202.4 lbs</div>
+        <div class="b-meta" id="b-wt-meta">32.4 lbs to go · 0% of journey</div>
+        <div class="b-track"><div class="b-fill" id="b-wt-fill" style="width:0%"></div></div>
+        <div class="b-pct" id="b-wt-pct">0.81 lbs/week needed</div>
+      </div>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="m-label">$ needed per week</div>
+        <div class="m-val" id="m-weekly">$7.5K</div>
+        <div><span class="m-badge bg-terra" id="m-daily">$1.5K/day</span></div>
+      </div>
+      <div class="metric-card">
+        <div class="m-label">Lbs to lose</div>
+        <div class="m-val" id="m-lbs">32.4</div>
+        <div><span class="m-badge bg-green" id="m-lbs-week">0.81 lbs/week</span></div>
+      </div>
+      <div class="metric-card">
+        <div class="m-label">Weeks remaining</div>
+        <div class="m-val" id="m-weeks">40</div>
+        <div><span class="m-badge bg-neutral">to Dec 31, 2026</span></div>
+      </div>
+      <div class="metric-card">
+        <div class="m-label">Net worth today</div>
+        <div class="m-val" id="m-nw">$0</div>
+        <div><span class="m-badge bg-neutral" id="m-nw-pct">0% of $300K</span></div>
+      </div>
+    </div>
+
+    <div class="three-col">
+      <div class="mini">
+        <div class="mini-label">Meditation streak</div>
+        <div class="mini-val" id="m-med">0 days</div>
+        <div class="mini-sub">Y entries in Daily Log</div>
+      </div>
+      <div class="mini">
+        <div class="mini-label">Bills paid YTD</div>
+        <div class="mini-val" id="m-bills">$0</div>
+        <div class="mini-sub">Checked off in tracker</div>
+      </div>
+      <div class="mini">
+        <div class="mini-label">Monthly obligations</div>
+        <div class="mini-val" id="m-monthly">$0</div>
+        <div class="mini-sub">Fixed monthly bills total</div>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="c-title">Monthly revenue</div>
+        <div class="c-sub">All income sources combined — from your Income Log</div>
+        <div style="position:relative;height:200px;"><canvas id="incomeChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="c-title">Revenue by source</div>
+        <div class="c-sub">YTD totals per business</div>
+        <div style="position:relative;height:150px;margin-top:4px;"><canvas id="splitChart"></canvas></div>
+        <div id="income-legend" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <div class="bottom-row">
+      <div class="chart-card">
+        <div class="c-title">Weight trend</div>
+        <div class="c-sub">Weekly weigh-ins vs 170 lb goal line</div>
+        <div id="wi" class="wi wi-g" style="margin-bottom:10px;"><div class="wi-text" id="wi-text">Log your weight in the Sheet to see trend</div></div>
+        <div style="position:relative;height:150px;"><canvas id="weightChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="c-title">Daily habits — last 28 days</div>
+        <div class="c-sub">Meditation check-ins</div>
+        <div class="habit-days">
+          <div class="h-day">M</div><div class="h-day">T</div><div class="h-day">W</div>
+          <div class="h-day">T</div><div class="h-day">F</div><div class="h-day">S</div><div class="h-day">S</div>
+        </div>
+        <div class="habit-grid" id="habit-grid"></div>
+        <div style="margin-top:10px;display:flex;gap:10px;">
+          <span style="font-size:11px;color:var(--gray);display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--sage-light);display:inline-block;"></span>Done</span>
+          <span style="font-size:11px;color:var(--gray);display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--terra-light);display:inline-block;"></span>Missed</span>
+          <span style="font-size:11px;color:var(--gray);display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--gray-bg);display:inline-block;"></span>No entry</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="chart-card">
+        <div class="c-title">Net worth trend</div>
+        <div class="c-sub">Daily balance log — from your Net Worth tab</div>
+        <div style="position:relative;height:180px;"><canvas id="nwChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="c-title">Account balances — latest</div>
+        <div class="c-sub">Most recent entry per account</div>
+        <div id="account-list" style="margin-top:8px;"></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+const GOAL_FIN = 300000, GOAL_WT = 170, START_WT = 202.4;
+const KEY = 'baseline_script_url';
+const BIZ_COLORS = ['#C4622D','#7A9E7E','#EF9F27','#534AB7','#378ADD','#3E6B42','#888780'];
+let iChart, sChart, wChart, nwChart;
+
+function fmt(n){ return n>=1000?'$'+(n/1000).toFixed(1)+'K':'$'+Math.round(n).toLocaleString(); }
+function setDate(){ document.getElementById('date-display').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); }
+
+function saveUrl(){
+  const url = document.getElementById('script-url').value.trim();
+  if(!url.startsWith('https://script.google.com')){
+    document.getElementById('err-banner').style.display='block';
+    return;
+  }
+  localStorage.setItem(KEY, url);
+  document.getElementById('err-banner').style.display='none';
+  loadData();
+}
+
+async function loadData(){
+  const url = localStorage.getItem(KEY);
+  if(!url) return;
+  document.getElementById('sync-label').textContent='Syncing...';
+  document.getElementById('sync-dot').classList.remove('live');
+  try {
+    const res = await fetch(url);
+    if(!res.ok) throw new Error();
+    const d = await res.json();
+    document.getElementById('setup-panel').style.display='none';
+    document.getElementById('dash').style.display='block';
+    document.getElementById('sync-dot').classList.add('live');
+    document.getElementById('sync-label').textContent='Live — '+new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    render(d);
+  } catch(e){
+    document.getElementById('err-banner').style.display='block';
+    document.getElementById('sync-label').textContent='Error';
+    localStorage.removeItem(KEY);
+  }
+}
+
+function render(d){
+  const earned = d.earned||0;
+  const cw = d.currentWeight||START_WT;
+  const wLeft = d.weeksLeft||40;
+  const finPct = Math.min(100,(earned/GOAL_FIN)*100);
+  const wtPct  = Math.min(100,Math.max(0,((START_WT-cw)/(START_WT-GOAL_WT))*100));
+
+  document.getElementById('b-earned').textContent = '$'+Math.round(earned).toLocaleString();
+  document.getElementById('b-fin-meta').textContent = fmt(earned)+' earned · '+finPct.toFixed(1)+'% complete';
+  document.getElementById('b-fin-fill').style.width = finPct.toFixed(1)+'%';
+  document.getElementById('b-fin-pct').textContent = finPct.toFixed(1)+'%'+(finPct>=50?' — past halfway!':' — keep building');
+
+  document.getElementById('b-weight').textContent = cw.toFixed(1)+' lbs';
+  const lbsLeft = Math.max(0, cw - GOAL_WT);
+  document.getElementById('b-wt-meta').textContent = lbsLeft.toFixed(1)+' lbs to go · '+wtPct.toFixed(1)+'% of journey';
+  document.getElementById('b-wt-fill').style.width = wtPct.toFixed(1)+'%';
+  document.getElementById('b-wt-pct').textContent = wLeft>0?(lbsLeft/wLeft).toFixed(2)+' lbs/week needed':'You made it!';
+
+  const neededWeek = wLeft>0?(GOAL_FIN-earned)/wLeft:0;
+  document.getElementById('m-weekly').textContent = fmt(neededWeek);
+  document.getElementById('m-daily').textContent = fmt(neededWeek/5)+'/day';
+  document.getElementById('m-lbs').textContent = lbsLeft.toFixed(1);
+  document.getElementById('m-lbs-week').textContent = wLeft>0?(lbsLeft/wLeft).toFixed(2)+' lbs/week':'Goal reached!';
+  document.getElementById('m-weeks').textContent = Math.round(wLeft);
+  const nw = d.netWorth||0;
+  document.getElementById('m-nw').textContent = fmt(nw);
+  document.getElementById('m-nw-pct').textContent = ((nw/GOAL_FIN)*100).toFixed(1)+'% of $300K';
+  document.getElementById('m-med').textContent = (d.meditationDays||0)+' days';
+  document.getElementById('m-bills').textContent = fmt(d.billsPaidYTD||0);
+  document.getElementById('m-monthly').textContent = fmt(d.monthlyBillTotal||0);
+
+  // Weight indicator
+  const wi = document.getElementById('wi');
+  const wiText = document.getElementById('wi-text');
+  if(d.currentWeight && d.lastWeight && d.currentWeight !== d.lastWeight){
+    const diff = d.currentWeight - d.lastWeight;
+    if(diff < 0){
+      wi.className='wi wi-g';
+      wiText.textContent = '▼ '+Math.abs(diff).toFixed(1)+' lbs since last entry — moving toward goal';
+    } else {
+      wi.className='wi wi-r';
+      wiText.textContent = '▲ +'+diff.toFixed(1)+' lbs since last entry — refocus today';
+    }
+  }
+
+  buildIncomeChart(d.monthlyIncome||[]);
+  buildSplitChart(d.bizTotals||[], d.bizNames||[]);
+  buildWeightChart(d.weightLog||[]);
+  buildNWChart(d.nwTrend||[]);
+  buildAccountList(d.accounts||[]);
+  buildHabitGrid(d.recentHabits||[]);
+}
+
+function buildIncomeChart(monthly){
+  if(iChart) iChart.destroy();
+  const ctx = document.getElementById('incomeChart').getContext('2d');
+  iChart = new Chart(ctx,{
+    type:'bar',
+    data:{labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+      datasets:[{label:'Revenue',data:monthly.length?monthly:Array(12).fill(0),backgroundColor:'#C4622D',borderRadius:5,hoverBackgroundColor:'#8B3A18'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10},color:'#888780'}},
+              y:{grid:{color:'#F1EFE8'},ticks:{font:{size:10},color:'#888780',callback:v=>'$'+(v/1000).toFixed(0)+'K'}}}}
+  });
+}
+
+function buildSplitChart(totals, names){
+  if(sChart) sChart.destroy();
+  const data = totals.length ? totals : Array(6).fill(0);
+  const labels = names.length ? names : ['White Sands REI','Fairwater Tech','Digital Products','Affiliate','Laundromat','Other'];
+  const ctx = document.getElementById('splitChart').getContext('2d');
+  sChart = new Chart(ctx,{
+    type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:BIZ_COLORS,borderWidth:0,hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false}}}
+  });
+  document.getElementById('income-legend').innerHTML = labels.map((n,i)=>
+    `<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px;">
+      <span style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:${BIZ_COLORS[i]};display:inline-block;"></span>${n}</span>
+      <span style="font-family:'DM Mono',monospace;color:var(--terra-dark);">${fmt(data[i]||0)}</span>
+    </div>`).join('');
+}
+
+function buildWeightChart(log){
+  if(wChart) wChart.destroy();
+  const ctx = document.getElementById('weightChart').getContext('2d');
+  const labels = log.length ? log.map((_,i)=>'Wk '+(i+1)) : Array(10).fill('').map((_,i)=>'Wk '+(i+1));
+  const actuals = log.length ? log : Array(10).fill(null);
+  wChart = new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Goal',data:Array(Math.max(labels.length,2)).fill(GOAL_WT),borderColor:'#7A9E7E',borderDash:[4,4],borderWidth:1.5,pointRadius:0,fill:false},
+      {label:'Weight',data:actuals,borderColor:'#C4622D',borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#C4622D',tension:0.3,fill:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:9},color:'#888780'}},
+              y:{grid:{color:'#F1EFE8'},ticks:{font:{size:10},color:'#888780',callback:v=>v+'lb'},min:160,max:210}}}
+  });
+}
+
+function buildNWChart(trend){
+  if(nwChart) nwChart.destroy();
+  const ctx = document.getElementById('nwChart').getContext('2d');
+  const labels = trend.length ? trend.map(t=>t.date) : ['Start'];
+  const data   = trend.length ? trend.map(t=>t.total) : [0];
+  const goalLine = Array(Math.max(labels.length,2)).fill(GOAL_FIN);
+  nwChart = new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'$300K Goal',data:goalLine,borderColor:'#EF9F27',borderDash:[4,4],borderWidth:1.5,pointRadius:0,fill:false},
+      {label:'Net Worth',data,borderColor:'#3E6B42',borderWidth:2.5,pointRadius:2,pointBackgroundColor:'#3E6B42',tension:0.3,
+       fill:{target:'origin',above:'rgba(62,107,66,0.07)'}}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:9},color:'#888780',maxTicksLimit:8}},
+              y:{grid:{color:'#F1EFE8'},ticks:{font:{size:10},color:'#888780',callback:v=>'$'+(v/1000).toFixed(0)+'K'}}}}
+  });
+}
+
+function buildAccountList(accounts){
+  const el = document.getElementById('account-list');
+  if(!accounts.length){ el.innerHTML='<p style="font-size:13px;color:var(--gray);">Log balances in Net Worth tab to see accounts here.</p>'; return; }
+  el.innerHTML = accounts.map((a,i)=>
+    `<div class="nw-account-row">
+      <div class="nw-dot" style="background:${BIZ_COLORS[i%BIZ_COLORS.length]}"></div>
+      <div class="nw-name">${a.name||'Account '+(i+1)}</div>
+      <div class="nw-val">${fmt(a.balance||0)}</div>
+    </div>`).join('');
+}
+
+function buildHabitGrid(recent){
+  const grid = document.getElementById('habit-grid');
+  const days = recent.length ? recent : Array(28).fill({med:'',rev:''});
+  grid.innerHTML = days.slice(0,28).map(d=>{
+    const cls = d.med==='Y'?'done':d.med===''||d.med===undefined?'':'missed';
+    return `<div class="h-cell ${cls}">${d.med||'·'}</div>`;
+  }).join('');
+}
+
+setDate();
+const saved = localStorage.getItem(KEY);
+if(saved){ document.getElementById('script-url').value=saved; loadData(); }
+</script>
+</body>
+</html>
